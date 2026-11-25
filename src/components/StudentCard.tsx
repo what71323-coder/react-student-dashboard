@@ -1,6 +1,7 @@
-﻿import type { StudentCardProps } from "../types/student";
+﻿import { memo } from "react";
+import type { StudentCardProps } from "../types/student";
 
-function StudentCard({
+const StudentCard = memo(function StudentCard({
   student,
   onEdit,
   onDelete
@@ -37,6 +38,6 @@ function StudentCard({
       </div>
     </div>
   );
-}
+});
 
 export default StudentCard;

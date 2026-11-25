@@ -1,9 +1,15 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState
+} from "react";
 
 import Header from "./components/Header";
 import SummaryCards from "./components/SummaryCards";
 import StudentForm from "./components/StudentForm";
-import StudentList from "./components/StudentList";
 
 import { initialStudents } from "./data/students";
 
@@ -31,6 +37,18 @@ import "./styles/style.css";
 
 const STORAGE_KEY = "react_student_records";
 
+const StudentRecordsPage = lazy(
+  () => import("./pages/StudentRecordsPage")
+);
+
+const appTitle =
+  import.meta.env.VITE_APP_TITLE ||
+  "Student Management Dashboard";
+
+const appSubtitle =
+  import.meta.env.VITE_APP_SUBTITLE ||
+  "Manage students, courses and enrollment records.";
+
 function App() {
   const [students, setStudents] = useState<Student[]>(() =>
     getStorageData<Student[]>(
@@ -44,7 +62,10 @@ function App() {
     useState<Student | null>(null);
 
   const [search, setSearch] = useState<string>("");
-  const [courseFilter, setCourseFilter] = useState<string>("All");
+
+  const [courseFilter, setCourseFilter] =
+    useState<string>("All");
+
   const [statusFilter, setStatusFilter] =
     useState<EnrollmentStatus | "All">("All");
 
@@ -54,7 +75,8 @@ function App() {
   const [sortDirection, setSortDirection] =
     useState<"asc" | "desc">("asc");
 
-  const [showForm, setShowForm] = useState<boolean>(false);
+  const [showForm, setShowForm] =
+    useState<boolean>(false);
 
   useEffect(() => {
     setStorageData(STORAGE_KEY, students);
@@ -62,12 +84,15 @@ function App() {
 
   const stats = useMemo<SummaryStats>(() => ({
     totalStudents: students.length,
+
     activeStudents: students.filter(
       (student) => student.status === "Active"
     ).length,
+
     inactiveStudents: students.filter(
       (student) => student.status === "Inactive"
     ).length,
+
     pendingStudents: students.filter(
       (student) => student.status === "Pending"
     ).length
@@ -82,7 +107,11 @@ function App() {
       statusFilter
     );
 
-    return sortRecords(filtered, sortBy, sortDirection);
+    return sortRecords(
+      filtered,
+      sortBy,
+      sortDirection
+    );
   }, [
     students,
     search,
@@ -92,19 +121,29 @@ function App() {
     sortDirection
   ]);
 
-  function handleAddStudent(values: StudentFormValues): void {
+  function handleAddStudent(
+    values: StudentFormValues
+  ): void {
     const newStudent: Student = {
       ...values,
       id: generateStudentId(),
-      enrollmentDate: new Date().toISOString().split("T")[0]
+      enrollmentDate: new Date()
+        .toISOString()
+        .split("T")[0]
     };
 
-    setStudents((previous) => [...previous, newStudent]);
+    setStudents((previous) => [
+      ...previous,
+      newStudent
+    ]);
+
     setShowForm(false);
     setSelectedStudent(null);
   }
 
-  function handleEditStudent(values: StudentFormValues): void {
+  function handleEditStudent(
+    values: StudentFormValues
+  ): void {
     if (!selectedStudent) return;
 
     setStudents((previous) =>
@@ -119,27 +158,35 @@ function App() {
     setShowForm(false);
   }
 
-  function handleDeleteStudent(id: string): void {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this student?"
-    );
+  const handleDeleteStudent = useCallback(
+    (id: string): void => {
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this student?"
+      );
 
-    if (!confirmed) return;
+      if (!confirmed) return;
 
-    setStudents((previous) =>
-      previous.filter((student) => student.id !== id)
-    );
+      setStudents((previous) =>
+        previous.filter(
+          (student) => student.id !== id
+        )
+      );
 
-    if (selectedStudent?.id === id) {
-      setSelectedStudent(null);
-      setShowForm(false);
-    }
-  }
+      if (selectedStudent?.id === id) {
+        setSelectedStudent(null);
+        setShowForm(false);
+      }
+    },
+    [selectedStudent]
+  );
 
-  function handleEditClick(student: Student): void {
-    setSelectedStudent(student);
-    setShowForm(true);
-  }
+  const handleEditClick = useCallback(
+    (student: Student): void => {
+      setSelectedStudent(student);
+      setShowForm(true);
+    },
+    []
+  );
 
   function handleOpenForm(): void {
     setSelectedStudent(null);
@@ -172,7 +219,9 @@ function App() {
         student.phone || "",
         student.enrollmentDate
       ]
-        .map((value) => `"${value.replace(/"/g, '""')}"`)
+        .map((value) =>
+          `"${value.replace(/"/g, '""')}"`
+        )
         .join(",")
     );
 
@@ -197,11 +246,15 @@ function App() {
 
   return (
     <div className="app-container">
+
       <Header
-        title="Student Management Dashboard"
-        subtitle="Manage students, courses and enrollment records."
+        title={appTitle}
+        subtitle={appSubtitle}
       >
-        <button className="export-btn" onClick={exportCSV}>
+        <button
+          className="export-btn"
+          onClick={exportCSV}
+        >
           Export CSV
         </button>
       </Header>
@@ -209,31 +262,46 @@ function App() {
       <SummaryCards stats={stats} />
 
       <div className="dashboard-layout">
+
         <main className="main-content">
+
           <div className="toolbar">
+
             <input
               type="search"
               placeholder="Search by name or email..."
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
             />
 
             <select
               value={courseFilter}
-              onChange={(event) => setCourseFilter(event.target.value)}
+              onChange={(event) =>
+                setCourseFilter(event.target.value)
+              }
             >
               <option value="All">All Courses</option>
-              <option value="React Development">React Development</option>
-              <option value="Web Development">Web Development</option>
+              <option value="React Development">
+                React Development
+              </option>
+              <option value="Web Development">
+                Web Development
+              </option>
               <option value="Python">Python</option>
               <option value="Java">Java</option>
-              <option value="UI/UX Design">UI/UX Design</option>
+              <option value="UI/UX Design">
+                UI/UX Design
+              </option>
             </select>
 
             <select
               value={statusFilter}
               onChange={(event) =>
-                setStatusFilter(event.target.value as EnrollmentStatus | "All")
+                setStatusFilter(
+                  event.target.value as EnrollmentStatus | "All"
+                )
               }
             >
               <option value="All">All Status</option>
@@ -245,13 +313,17 @@ function App() {
             <select
               value={`${sortBy}-${sortDirection}`}
               onChange={(event) => {
-                const [key, direction] = event.target.value.split("-");
+                const [key, direction] =
+                  event.target.value.split("-");
 
                 if (key === "name" || key === "course") {
                   setSortBy(key);
                 }
 
-                if (direction === "asc" || direction === "desc") {
+                if (
+                  direction === "asc" ||
+                  direction === "desc"
+                ) {
                   setSortDirection(direction);
                 }
               }}
@@ -262,16 +334,29 @@ function App() {
               <option value="course-desc">Course Z-A</option>
             </select>
 
-            <button className="add-btn" onClick={handleOpenForm}>
+            <button
+              className="add-btn"
+              onClick={handleOpenForm}
+            >
               + Add Student
             </button>
+
           </div>
 
-          <StudentList
-            students={filteredStudents}
-            onEdit={handleEditClick}
-            onDelete={handleDeleteStudent}
-          />
+          <Suspense
+            fallback={
+              <div className="empty-state">
+                Loading student records...
+              </div>
+            }
+          >
+            <StudentRecordsPage
+              students={filteredStudents}
+              onEdit={handleEditClick}
+              onDelete={handleDeleteStudent}
+            />
+          </Suspense>
+
         </main>
 
         {showForm && (
@@ -287,11 +372,15 @@ function App() {
             />
           </aside>
         )}
+
       </div>
 
       <footer className="footer">
-        <p>Student Management Dashboard | React + TypeScript</p>
+        <p>
+          Student Management Dashboard | React + TypeScript
+        </p>
       </footer>
+
     </div>
   );
 }
